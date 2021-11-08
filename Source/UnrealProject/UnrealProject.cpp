@@ -16,6 +16,12 @@ DEFINE_LOG_CATEGORY(LOG_JG);
 
 #pragma endregion
 
+#pragma region YongHwan
+
+DEFINE_LOG_CATEGORY(LOG_YH);
+
+#pragma endregion
+
  
 IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, UnrealProject, "UnrealProject" );
 
