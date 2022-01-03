@@ -2,10 +2,14 @@
 
 
 #include "YongHwan/YHCharacter.h"
-
+#include "YongHwan/YHAnimInstance.h"
 // Sets default values
 AYHCharacter::AYHCharacter()
 {
+	MaxCombo = 4;
+	AttackEndComboState();
+
+	IsAttacking = false;
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SHSPRINGARM"));
@@ -44,6 +48,8 @@ AYHCharacter::AYHCharacter()
 	ArmLengthSpeed = 3.0f;
 	ArmRotationSpeed = 10.0f;
 	SetControlMode(EControlMode::DIABLO);
+
+	GetCharacterMovement()->JumpZVelocity = 800.0f;
 }
 
 void AYHCharacter::SetControlMode(EControlMode NewControlMode) {
@@ -150,7 +156,8 @@ void AYHCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAxis(TEXT("LeftRight_YH"), this, &AYHCharacter::LeftRight);
 	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &AYHCharacter::LookUp);
 	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &AYHCharacter::Turn);
-
+	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction(TEXT("Attack_YH"), EInputEvent::IE_Pressed, this, &AYHCharacter::Attack);
 }
 void AYHCharacter::UpDown(float NewAxisValue) {
 	YHLOG(Warning, TEXT("%f"), NewAxisValue);
@@ -232,4 +239,54 @@ void AYHCharacter::ViewChange()
 		SetControlMode(EControlMode::GTA);
 		break;
 	}
+}
+void AYHCharacter::Attack()
+{
+	if (IsAttacking) return;
+	/*auto AnimInstance = Cast<UYHAnimInstance>(GetMesh()->GetAnimInstance());
+	if (nullptr == AnimInstance) return;
+
+	AnimInstance->PlayAttackMontage();*/
+
+	YHAnim->PlayAttackMontage();
+	YHLOG_S(Error);
+}
+void AYHCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	/*auto AnimInstance = Cast<UYHAnimInstance>(GetMesh()->GetAnimInstance());
+	YHCHECK(nullptr != AnimInstance);*/
+	//AnimInstance->OnMontageEnded.AddDynamic(this, &AYHCharacter::OnAttackMontageEnded);
+	YHAnim = Cast<UYHAnimInstance>(GetMesh()->GetAnimInstance());
+	YHCHECK(nullptr != YHAnim);
+
+	YHAnim->OnMontageEnded.AddDynamic(this, &AYHCharacter::OnAttackMontageEnded);
+}
+
+void AYHCharacter::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	YHCHECK(IsAttacking);
+	IsAttacking = false;
+}
+
+void AYHCharacter::AttackStartComboState()
+{
+	// 다음 단계로 가능
+	CanNextCombo = true;
+	// 입력값은 초기화
+	IsComboInputOn = false;
+
+	// bool(0 <= CurrentCombo <= MaxCombo - 1 (=3))
+	YHCHECK(FMath::IsWithinInclusive<int32>(CurrentCombo, 0, MaxCombo - 1));
+
+	// 1 <= CurrentCombo + 1 <= MaxCombo(=4)
+	CurrentCombo = FMath::Clamp<int32>(CurrentCombo + 1, 1, MaxCombo);
+}
+
+void AYHCharacter::AttackEndComboState()
+{
+	// 전부 초기화
+	IsComboInputOn = false;
+	CanNextCombo = false;
+	CurrentCombo = 0;
 }

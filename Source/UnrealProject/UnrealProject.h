@@ -51,5 +51,6 @@ DECLARE_LOG_CATEGORY_EXTERN(LOG_YH, Log, All);
 #define YHLOG_CALLINFO (FString(__FUNCTION__) + TEXT("(")+ FString::FromInt(__LINE__) + TEXT(")"))
 #define YHLOG_S(Verbosity) UE_LOG(LOG_YH, Verbosity, TEXT("%s"), *YHLOG_CALLINFO)
 #define YHLOG(Verbosity, Format, ...) UE_LOG(LOG_YH, Verbosity, TEXT("%s, %s"), *YHLOG_CALLINFO, *FString::Printf(Format, ##__VA_ARGS__))
-
+// 해당하는 조건식 Expr이 거짓이면 아래 매크로 함수 내부를 실행함.
+#define YHCHECK(Expr, ...) {if(!(Expr)){ YHLOG(Error, TEXT("ASSERTION : %s"), TEXT("'"#Expr"'")); return __VA_ARGS__;}}
 #pragma endregion
